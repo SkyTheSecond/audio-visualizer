@@ -5,6 +5,8 @@ add_library(audioviz STATIC
     window.cpp
     audio.cpp
     stft.cpp
+    spectrum.cpp
+    bands.cpp
 )
 
 target_include_directories(audioviz PUBLIC

@@ -1,6 +1,7 @@
 #include <audioviz/stft.hpp>
 
 #include <audioviz/fft.hpp>
+#include <audioviz/spectrum.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -44,24 +45,13 @@ Spectrogram compute_spectrogram(std::span<const double> mono, int sample_rate,
     spectrogram.frame_count = 1 + (mono.size() - config.frame_size) / config.hop_size;
     spectrogram.magnitudes.resize(spectrogram.frame_count * spectrogram.bin_count);
 
-    const std::vector<double> window = make_window(config.window, config.frame_size);
-
-    // Reused scratch buffer so the loop performs no allocation.
-    std::vector<complex> buffer(config.frame_size);
+    // One analyzer for every frame: it builds the window once and reuses its buffers.
+    SpectrumAnalyzer analyzer(config.frame_size, config.window);
 
     for (std::size_t frame = 0; frame < spectrogram.frame_count; frame++) {
         const std::size_t offset = frame * config.hop_size;
-
-        for (std::size_t i = 0; i < config.frame_size; i++) {
-            buffer[i] = complex{mono[offset + i] * window[i], 0.0};
-        }
-
-        fft_inplace(buffer, false);
-
-        // Keep the lower half only; for real input the upper half mirrors it.
-        for (std::size_t bin = 0; bin < spectrogram.bin_count; bin++) {
-            spectrogram.at(frame, bin) = std::abs(buffer[bin]);
-        }
+        const auto bins = analyzer.analyze(mono.subspan(offset, config.frame_size));
+        std::copy(bins.begin(), bins.end(), &spectrogram.at(frame, 0));
     }
 
     return spectrogram;

@@ -67,6 +67,8 @@ linux-gcc:
     - python3 ci/make_test_wav.py chirp.wav
     - ./build/src/cli/audioviz_cli chirp.wav chirp.pgm
     - bash ci/gui_smoke.sh ./build/src/gui/audioviz_gui chirp.wav
+    # No sound card in the container: the player falls back to miniaudio's silent output.
+    - bash ci/gui_smoke.sh ./build/src/player/audioviz_player chirp.wav
 
 linux-clang:
   extends: [.linux, .junit]

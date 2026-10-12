@@ -8,13 +8,16 @@ to use GitLab.com's hosted runners or register your own, and how to read the res
 
 | Job | Runs on | What it does |
 |-----|---------|--------------|
-| `linux-gcc` | Docker, `ubuntu:24.04`, untagged | GCC 14 build with the GUI, all tests, then runs `audioviz_cli` on a generated WAV and starts `audioviz_gui` for 5 s on a virtual display (Xvfb + Mesa), failing on any OpenGL or GLFW error |
+| `lint` | Docker, `ubuntu:24.04`, untagged | clang-format 19 and clang-tidy 19 over `src/` and `tests/` (`ci/lint.sh`): fails on unformatted code, naming that breaks the project's style, or a bug-finding check |
+| `linux-gcc` | Docker, `ubuntu:24.04`, untagged | GCC 14 build with the GUI, all tests, then runs `audioviz_cli` on a generated WAV and starts `audioviz_gui` and `audioviz_player` for 5 s each on a virtual display (Xvfb + Mesa), failing on any OpenGL or GLFW error. There is no sound card, so the player's audio goes to miniaudio's silent output. |
 | `linux-clang` | Docker, `ubuntu:24.04`, untagged | Clang 19 build with the GUI, all tests |
 | `linux-headless` | Docker, `ubuntu:24.04`, untagged | Release build with `AUDIOVIZ_BUILD_GUI=OFF` and only the compiler installed: proves the library, CLI and tests need no windowing packages |
 | `windows-msvc` | Windows, PowerShell, tag `$WINDOWS_RUNNER_TAG` | Visual Studio (MSVC) build of everything, all tests |
 | `macos` | macOS, tag `$MACOS_RUNNER_TAG` | Apple Clang build of everything, all tests. **Only runs when `AUDIOVIZ_CI_MACOS` is `"true"`.** |
 
-All jobs are in one stage, so they run in parallel. Each publishes its test results as a
+All jobs are in one stage, so they run in parallel. The Linux and macOS builds use
+`-DAUDIOVIZ_WARNINGS_AS_ERRORS=ON`, so a new compiler warning fails them; Windows will get the
+same once a run shows MSVC is warning-free too. Each build job publishes its test results as a
 JUnit report, so every individual GoogleTest case shows up in the pipeline's **Tests** tab.
 
 ## Variables
@@ -126,6 +129,10 @@ and `MACOS_RUNNER_TAG` to the runner's tag.
   driver, a `GLFW error`, or the program exiting early.
 - **Configure fails with "standard library is missing C++23 features"**: the image or
   runner has a compiler that is too old. See the compiler table in the README.
+- **`lint` fails**: the log names each file and line. "code should be clang-formatted" is
+  fixed by running clang-format on that file; anything else is a clang-tidy check, named in
+  brackets at the end of the line. The README's *Code style* section shows how to run the
+  same check locally.
 
 ## Running the Linux job on your own machine
 

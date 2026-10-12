@@ -5,6 +5,7 @@ add_executable(audioviz_tests
     test_window.cpp
     test_audio.cpp
     test_stft.cpp
+    test_spectrum.cpp
 )
 
 target_link_libraries(audioviz_tests PRIVATE audioviz GTest::gtest_main)

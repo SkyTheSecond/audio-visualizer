@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-option(AUDIOVIZ_BUILD_GUI "Build the OpenGL spectrogram viewer (needs a windowing system)" ON)
+option(AUDIOVIZ_BUILD_GUI "Build the windowed programs: viewer and player (need a display)" ON)
 option(AUDIOVIZ_WARNINGS_AS_ERRORS "Fail the build on any compiler warning in our own code (CI turns this on)" OFF)
 
 # A compiler can accept -std=c++23 while its standard library still lacks pieces we use.
@@ -70,6 +70,7 @@ if(AUDIOVIZ_BUILD_GUI)
 
     add_subdirectory(third_party/glad)
     add_subdirectory(third_party/imgui)
+    add_subdirectory(third_party/miniaudio)
 endif()
 
 # Our own stuff
@@ -77,6 +78,7 @@ add_subdirectory(src/lib)
 add_subdirectory(src/cli)
 if(AUDIOVIZ_BUILD_GUI)
     add_subdirectory(src/gui)
+    add_subdirectory(src/player)
 endif()
 
 enable_testing()
