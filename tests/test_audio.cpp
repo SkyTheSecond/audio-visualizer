@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <shazam/audio.hpp>
+#include <audioviz/audio.hpp>
 
 #include <cstdint>
 #include <filesystem>
@@ -76,9 +76,9 @@ std::filesystem::path write_temp_wav(const std::vector<unsigned char>& bytes, co
 
 TEST(Wav, ReadsMonoPcm16) {
     const std::vector<std::int16_t> samples = {0, 16384, -16384, 32767, -32768};
-    const auto path = write_temp_wav(make_wav(samples, 1, 44100, false), "shazam_test_mono.wav");
+    const auto path = write_temp_wav(make_wav(samples, 1, 44100, false), "audioviz_test_mono.wav");
 
-    const auto result = shazam::load_wav(path);
+    const auto result = audioviz::load_wav(path);
     ASSERT_TRUE(result.has_value()) << result.error();
 
     EXPECT_EQ(result->sample_rate, 44100);
@@ -96,9 +96,9 @@ TEST(Wav, ReadsMonoPcm16) {
 // The regression test that matters: data does not start at byte 44 here.
 TEST(Wav, FindsDataChunkAfterOtherChunks) {
     const std::vector<std::int16_t> samples = {1000, 2000, 3000, 4000};
-    const auto path = write_temp_wav(make_wav(samples, 1, 22050, true), "shazam_test_extra.wav");
+    const auto path = write_temp_wav(make_wav(samples, 1, 22050, true), "audioviz_test_extra.wav");
 
-    const auto result = shazam::load_wav(path);
+    const auto result = audioviz::load_wav(path);
     ASSERT_TRUE(result.has_value()) << result.error();
 
     EXPECT_EQ(result->sample_rate, 22050);
@@ -111,14 +111,14 @@ TEST(Wav, FindsDataChunkAfterOtherChunks) {
 TEST(Wav, DownmixesStereoToMono) {
     // Interleaved L R: (1.0, 0.0) then (0.0, 1.0). Both average to 0.5.
     const std::vector<std::int16_t> samples = {32767, 0, 0, 32767};
-    const auto path = write_temp_wav(make_wav(samples, 2, 44100, false), "shazam_test_stereo.wav");
+    const auto path = write_temp_wav(make_wav(samples, 2, 44100, false), "audioviz_test_stereo.wav");
 
-    const auto result = shazam::load_wav(path);
+    const auto result = audioviz::load_wav(path);
     ASSERT_TRUE(result.has_value()) << result.error();
     EXPECT_EQ(result->channels, 2);
     EXPECT_EQ(result->frame_count(), 2u);
 
-    const std::vector<double> mono = shazam::to_mono(*result);
+    const std::vector<double> mono = audioviz::to_mono(*result);
     ASSERT_EQ(mono.size(), 2u);
     EXPECT_NEAR(mono[0], 0.5, 1e-4);
     EXPECT_NEAR(mono[1], 0.5, 1e-4);
@@ -128,9 +128,9 @@ TEST(Wav, DownmixesStereoToMono) {
 
 TEST(Wav, RejectsNonWavFile) {
     const std::vector<unsigned char> junk = {'n', 'o', 'p', 'e'};
-    const auto path = write_temp_wav(junk, "shazam_test_junk.wav");
+    const auto path = write_temp_wav(junk, "audioviz_test_junk.wav");
 
-    const auto result = shazam::load_wav(path);
+    const auto result = audioviz::load_wav(path);
     EXPECT_FALSE(result.has_value());
 
     std::filesystem::remove(path);

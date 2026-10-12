@@ -2,6 +2,6 @@
 
 #include <string_view>
 
-namespace shazam {
+namespace audioviz {
 std::string_view version();
 }

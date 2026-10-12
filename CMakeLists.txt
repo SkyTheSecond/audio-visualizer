@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.25)
-project(shazam LANGUAGES C CXX)
+project(audio_visualizer LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-option(SHAZAM_BUILD_GUI "Build the OpenGL spectrogram viewer (needs a windowing system)" ON)
+option(AUDIOVIZ_BUILD_GUI "Build the OpenGL spectrogram viewer (needs a windowing system)" ON)
 
 # A compiler can accept -std=c++23 while its standard library still lacks pieces we use.
 # The classic case: Clang 18 with GCC's libstdc++ (Ubuntu 24.04's default `clang`) has no
@@ -20,8 +20,8 @@ check_cxx_source_compiles([[
         std::expected<int, int> value{1};
         return std::format("{}", *value).size() == 1 ? 0 : 1;
     }
-]] SHAZAM_HAS_CXX23_LIBRARY)
-if(NOT SHAZAM_HAS_CXX23_LIBRARY)
+]] AUDIOVIZ_HAS_CXX23_LIBRARY)
+if(NOT AUDIOVIZ_HAS_CXX23_LIBRARY)
     message(FATAL_ERROR
         "This compiler's standard library is missing C++23 features the project needs "
         "(std::expected, <format>, <print>). Use GCC 14+, Clang 19+ (or Clang 18 with "
@@ -31,12 +31,12 @@ endif()
 
 # Warning flags are spelled differently by MSVC (and clang-cl) than by GCC/Clang.
 if(MSVC)
-    set(SHAZAM_WARNINGS /W4 /permissive-)
-    set(SHAZAM_STRICT_WARNINGS ${SHAZAM_WARNINGS})
+    set(AUDIOVIZ_WARNINGS /W4 /permissive-)
+    set(AUDIOVIZ_STRICT_WARNINGS ${AUDIOVIZ_WARNINGS})
     add_compile_options(/utf-8)
 else()
-    set(SHAZAM_WARNINGS -Wall -Wextra)
-    set(SHAZAM_STRICT_WARNINGS ${SHAZAM_WARNINGS} -Wpedantic)
+    set(AUDIOVIZ_WARNINGS -Wall -Wextra)
+    set(AUDIOVIZ_STRICT_WARNINGS ${AUDIOVIZ_WARNINGS} -Wpedantic)
 endif()
 
 # Adding google test
@@ -46,7 +46,7 @@ set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 add_subdirectory(third_party/googletest)
 
-if(SHAZAM_BUILD_GUI)
+if(AUDIOVIZ_BUILD_GUI)
     set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
     set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
     set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -64,7 +64,7 @@ endif()
 # Our own stuff
 add_subdirectory(src/lib)
 add_subdirectory(src/cli)
-if(SHAZAM_BUILD_GUI)
+if(AUDIOVIZ_BUILD_GUI)
     add_subdirectory(src/gui)
 endif()
 

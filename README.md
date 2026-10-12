@@ -1,14 +1,14 @@
-# shazam
+# audio-visualizer
 
-Audio fingerprinting from scratch: FFT, STFT/spectrogram, and an OpenGL viewer.
+Audio analysis and visualisation from scratch: FFT, STFT/spectrogram, and an OpenGL viewer.
 
-| Program        | What it does |
-|----------------|--------------|
-| `shazam_cli`   | `shazam_cli <file.wav> [out.pgm]` prints the file's details and writes its spectrogram as a greyscale image |
-| `shazam_gui`   | `shazam_gui <file.wav>` shows the spectrogram in a window, in colour, with zoom |
-| `shazam_tests` | the GoogleTest suite, run through `ctest` |
+| Program          | What it does |
+|------------------|--------------|
+| `audioviz_cli`   | `audioviz_cli <file.wav> [out.pgm]` prints the file's details and writes its spectrogram as a greyscale image |
+| `audioviz_gui`   | `audioviz_gui <file.wav>` shows the spectrogram in a window, in colour, with zoom |
+| `audioviz_tests` | the GoogleTest suite, run through `ctest` |
 
-All of them are built on `shazam`, the DSP library, which has no GUI dependencies.
+All of them are built on `audioviz`, the DSP library, which has no GUI dependencies.
 
 ## Requirements
 
@@ -52,8 +52,8 @@ ctest --test-dir build --output-on-failure
 Run:
 
 ```bash
-./build/src/cli/shazam_cli song.wav spectrogram.pgm
-./build/src/gui/shazam_gui song.wav
+./build/src/cli/audioviz_cli song.wav spectrogram.pgm
+./build/src/gui/audioviz_gui song.wav
 ```
 
 The viewer works on X11 and Wayland desktops alike; GLFW picks whichever is running.
@@ -68,8 +68,8 @@ cmake -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build -j
 ctest --test-dir build --output-on-failure
 
-./build/src/cli/shazam_cli song.wav spectrogram.pgm
-./build/src/gui/shazam_gui song.wav
+./build/src/cli/audioviz_cli song.wav spectrogram.pgm
+./build/src/gui/audioviz_gui song.wav
 ```
 
 ## Windows
@@ -84,8 +84,8 @@ cmake -B build
 cmake --build build --config Debug
 ctest --test-dir build -C Debug --output-on-failure
 
-.\build\src\cli\Debug\shazam_cli.exe song.wav spectrogram.pgm
-.\build\src\gui\Debug\shazam_gui.exe song.wav
+.\build\src\cli\Debug\audioviz_cli.exe song.wav spectrogram.pgm
+.\build\src\gui\Debug\audioviz_gui.exe song.wav
 ```
 
 Visual Studio's generator builds several configurations from one `build` directory, so
@@ -100,7 +100,7 @@ pacman -S --needed mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake mingw-w
 cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 ctest --test-dir build --output-on-failure
-./build/src/gui/shazam_gui.exe song.wav
+./build/src/gui/audioviz_gui.exe song.wav
 ```
 
 File names are passed in the system's legacy code page, so a song whose name uses characters
@@ -128,7 +128,7 @@ IrfanView on Windows.
 
 | Option | Default | Effect |
 |--------|---------|--------|
-| `-DSHAZAM_BUILD_GUI=OFF` | `ON` | Build only the library, CLI and tests. No windowing packages needed: for servers and headless CI. |
+| `-DAUDIOVIZ_BUILD_GUI=OFF` | `ON` | Build only the library, CLI and tests. No windowing packages needed: for servers and headless CI. |
 | `-DCMAKE_BUILD_TYPE=Release` | none | Optimised build (single-config generators). Debug builds are several times slower on long files. |
 
 ## OpenGL

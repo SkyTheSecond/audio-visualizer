@@ -1,25 +1,25 @@
 #include <gtest/gtest.h>
 
-#include <shazam/fft.hpp>
-#include <shazam/window.hpp>
+#include <audioviz/fft.hpp>
+#include <audioviz/window.hpp>
 
 #include <cmath>
 #include <numbers>
 #include <vector>
 
-using shazam::complex;
-using shazam::WindowType;
+using audioviz::complex;
+using audioviz::WindowType;
 
 namespace {
 
 TEST(Window, RectangularIsAllOnes) {
-    for (double value : shazam::make_window(WindowType::Rectangular, 32)) {
+    for (double value : audioviz::make_window(WindowType::Rectangular, 32)) {
         EXPECT_DOUBLE_EQ(value, 1.0);
     }
 }
 
 TEST(Window, HannStartsAtZeroAndPeaksAtOne) {
-    const std::vector<double> w = shazam::make_window(WindowType::Hann, 1024);
+    const std::vector<double> w = audioviz::make_window(WindowType::Hann, 1024);
 
     EXPECT_NEAR(w.front(), 0.0, 1e-12);
     EXPECT_NEAR(w[w.size() / 2], 1.0, 1e-12);
@@ -31,7 +31,7 @@ TEST(Window, HannStartsAtZeroAndPeaksAtOne) {
 }
 
 TEST(Window, HammingHasNonZeroEndpoints) {
-    const std::vector<double> w = shazam::make_window(WindowType::Hamming, 512);
+    const std::vector<double> w = audioviz::make_window(WindowType::Hamming, 512);
     EXPECT_NEAR(w.front(), 0.08, 1e-12);
 }
 
@@ -49,10 +49,10 @@ TEST(Window, HannLeaksLessThanRectangular) {
 
     auto far_field_energy = [&](WindowType type) {
         std::vector<double> frame = signal;
-        const std::vector<double> window = shazam::make_window(type, n);
-        shazam::apply_window(frame, window);
+        const std::vector<double> window = audioviz::make_window(type, n);
+        audioviz::apply_window(frame, window);
 
-        const std::vector<complex> spectrum = shazam::fft(std::span<const double>(frame));
+        const std::vector<complex> spectrum = audioviz::fft(std::span<const double>(frame));
 
         // Sum energy in the lower half, skipping 10 bins either side of the
         // tone. Anything left is leakage.

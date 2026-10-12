@@ -1,11 +1,11 @@
 #pragma once
 
-#include <shazam/dft.hpp>
+#include <audioviz/dft.hpp>
 
 #include <span>
 #include <vector>
 
-namespace shazam {
+namespace audioviz {
 
 bool is_power_of_two(std::size_t n);
 
@@ -17,4 +17,4 @@ std::vector<complex> fft(std::span<const complex> input);
 std::vector<complex> ifft(std::span<const complex> input);
 
 std::vector<complex> fft(std::span<const double> input);
-}  // namespace shazam
+}  // namespace audioviz

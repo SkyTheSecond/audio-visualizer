@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <shazam/shazam.hpp>
+#include <audioviz/audioviz.hpp>
 
-TEST(Smoke, VersionIsNotEmpty) { EXPECT_FALSE(shazam::version().empty()); }
+TEST(Smoke, VersionIsNotEmpty) { EXPECT_FALSE(audioviz::version().empty()); }

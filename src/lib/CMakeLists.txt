@@ -1,5 +1,5 @@
-add_library(shazam STATIC
-    shazam.cpp
+add_library(audioviz STATIC
+    audioviz.cpp
     dft.cpp
     fft.cpp
     window.cpp
@@ -7,10 +7,10 @@ add_library(shazam STATIC
     stft.cpp
 )
 
-target_include_directories(shazam PUBLIC
+target_include_directories(audioviz PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-target_compile_options(shazam PRIVATE
-    ${SHAZAM_STRICT_WARNINGS}
+target_compile_options(audioviz PRIVATE
+    ${AUDIOVIZ_STRICT_WARNINGS}
 )

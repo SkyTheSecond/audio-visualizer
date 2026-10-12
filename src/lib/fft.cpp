@@ -1,10 +1,10 @@
-#include <shazam/fft.hpp>
+#include <audioviz/fft.hpp>
 #include <bit>
 #include <numbers>
 #include <stdexcept>
 #include <utility>
 
-namespace shazam {
+namespace audioviz {
 bool is_power_of_two(std::size_t n) { return n != 0 && std::has_single_bit(n); }
 
 namespace {
@@ -119,4 +119,4 @@ std::vector<complex> fft(std::span<const double> input) {
     fft_inplace(output, false);
     return output;
 }
-}  // namespace shazam
+}  // namespace audioviz

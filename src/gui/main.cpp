@@ -1,8 +1,8 @@
 #include "spectrogram_image.hpp"
 #include "texture.hpp"
 
-#include <shazam/audio.hpp>
-#include <shazam/stft.hpp>
+#include <audioviz/audio.hpp>
+#include <audioviz/stft.hpp>
 
 // glad must come before GLFW. GLFW_INCLUDE_NONE (set in CMake) already stops GLFW from
 // pulling in another GL header, but this order is the safe habit.
@@ -47,7 +47,7 @@ GLFWwindow* create_window() {
     for (const GlVersion version : kGlVersions) {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, version.major);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, version.minor);
-        window = glfwCreateWindow(1280, 720, "shazam - spectrogram", nullptr, nullptr);
+        window = glfwCreateWindow(1280, 720, "audio visualizer - spectrogram", nullptr, nullptr);
         if (window != nullptr) break;
     }
 
@@ -107,14 +107,14 @@ int main(int argc, char** argv) {
 
     // --- load and analyse before touching graphics -------------------------
     // A bad file should fail fast, without ever opening a window.
-    const auto audio = shazam::load_wav(argv[1]);
+    const auto audio = audioviz::load_wav(argv[1]);
     if (!audio) {
         std::fprintf(stderr, "error: %s\n", audio.error().c_str());
         return 1;
     }
 
-    const std::vector<double> mono = shazam::to_mono(*audio);
-    const shazam::Spectrogram spectrogram = shazam::compute_spectrogram(mono, audio->sample_rate);
+    const std::vector<double> mono = audioviz::to_mono(*audio);
+    const audioviz::Spectrogram spectrogram = audioviz::compute_spectrogram(mono, audio->sample_rate);
 
     // Pure CPU work: magnitudes to coloured pixels. No GL involved yet.
     const gui::Image image = gui::spectrogram_to_image(spectrogram);

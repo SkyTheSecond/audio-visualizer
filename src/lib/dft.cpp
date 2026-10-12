@@ -1,9 +1,9 @@
-#include <shazam/dft.hpp>
+#include <audioviz/dft.hpp>
 
 #include <cmath>
 #include <numbers>
 
-namespace shazam {
+namespace audioviz {
 namespace {
 std::vector<complex> transform(std::span<const complex> input, double sign) {
     const std::size_t n = input.size();
@@ -38,4 +38,4 @@ std::vector<complex> idft(std::span<const complex> input) {
 
     return output;
 }
-}  // namespace shazam
+}  // namespace audioviz

@@ -1,8 +1,8 @@
-add_executable(shazam_gui
+add_executable(audioviz_gui
     main.cpp
     spectrogram_image.cpp
     texture.cpp
 )
 
-target_link_libraries(shazam_gui PRIVATE shazam imgui glad)
-target_compile_options(shazam_gui PRIVATE ${SHAZAM_WARNINGS})
+target_link_libraries(audioviz_gui PRIVATE audioviz imgui glad)
+target_compile_options(audioviz_gui PRIVATE ${AUDIOVIZ_WARNINGS})

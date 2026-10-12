@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <shazam/stft.hpp>
+#include <audioviz/stft.hpp>
 
 #include <cmath>
 #include <numbers>
@@ -19,7 +19,7 @@ std::vector<double> make_tone(double frequency, int sample_rate, double seconds)
     return signal;
 }
 
-std::size_t loudest_bin(const shazam::Spectrogram& s, std::size_t frame) {
+std::size_t loudest_bin(const audioviz::Spectrogram& s, std::size_t frame) {
     std::size_t best = 0;
     double best_value = -1.0;
 
@@ -36,8 +36,8 @@ TEST(Stft, ShapeIsCorrect) {
     const int sample_rate = 11025;
     const std::vector<double> signal = make_tone(440.0, sample_rate, 1.0);
 
-    shazam::StftConfig config;  // 1024 / 512 / Hann
-    const shazam::Spectrogram s = shazam::compute_spectrogram(signal, sample_rate, config);
+    audioviz::StftConfig config;  // 1024 / 512 / Hann
+    const audioviz::Spectrogram s = audioviz::compute_spectrogram(signal, sample_rate, config);
 
     EXPECT_EQ(s.bin_count, 513u);
     EXPECT_EQ(s.frame_count, 1 + (signal.size() - 1024) / 512);
@@ -46,7 +46,7 @@ TEST(Stft, ShapeIsCorrect) {
 
 TEST(Stft, BinFrequencyMathIsRight) {
     const std::vector<double> signal = make_tone(440.0, 11025, 1.0);
-    const shazam::Spectrogram s = shazam::compute_spectrogram(signal, 11025);
+    const audioviz::Spectrogram s = audioviz::compute_spectrogram(signal, 11025);
 
     EXPECT_NEAR(s.bin_frequency(0), 0.0, 1e-9);
     EXPECT_NEAR(s.bin_frequency(1), 11025.0 / 1024.0, 1e-9);
@@ -60,7 +60,7 @@ TEST(Stft, SteadyToneStaysInTheSameBin) {
     const double frequency = 1000.0;
     const std::vector<double> signal = make_tone(frequency, sample_rate, 2.0);
 
-    const shazam::Spectrogram s = shazam::compute_spectrogram(signal, sample_rate);
+    const audioviz::Spectrogram s = audioviz::compute_spectrogram(signal, sample_rate);
     ASSERT_GT(s.frame_count, 10u);
 
     const auto expected = static_cast<std::size_t>(std::round(frequency * 1024.0 / sample_rate));
@@ -90,7 +90,7 @@ TEST(Stft, ChirpRisesOverTime) {
         signal[n] = std::sin(phase);
     }
 
-    const shazam::Spectrogram s = shazam::compute_spectrogram(signal, sample_rate);
+    const audioviz::Spectrogram s = audioviz::compute_spectrogram(signal, sample_rate);
     ASSERT_GT(s.frame_count, 20u);
 
     const std::size_t first = loudest_bin(s, 2);
@@ -105,14 +105,14 @@ TEST(Stft, ChirpRisesOverTime) {
 }
 
 TEST(Stft, DecibelConversionClampsSilence) {
-    EXPECT_NEAR(shazam::to_decibels(1.0, 1.0), 0.0, 1e-9);
-    EXPECT_NEAR(shazam::to_decibels(0.5, 1.0), -6.02, 0.01);
-    EXPECT_NEAR(shazam::to_decibels(0.0, 1.0), -80.0, 1e-9);
+    EXPECT_NEAR(audioviz::to_decibels(1.0, 1.0), 0.0, 1e-9);
+    EXPECT_NEAR(audioviz::to_decibels(0.5, 1.0), -6.02, 0.01);
+    EXPECT_NEAR(audioviz::to_decibels(0.0, 1.0), -80.0, 1e-9);
 }
 
 TEST(Stft, ShortSignalProducesNoFrames) {
     const std::vector<double> tiny(100, 0.0);
-    const shazam::Spectrogram s = shazam::compute_spectrogram(tiny, 11025);
+    const audioviz::Spectrogram s = audioviz::compute_spectrogram(tiny, 11025);
     EXPECT_EQ(s.frame_count, 0u);
 }
 

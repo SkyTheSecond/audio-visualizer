@@ -1,13 +1,13 @@
 #pragma once
 
-#include <shazam/window.hpp>
+#include <audioviz/window.hpp>
 
 #include <cstddef>
 #include <span>
 #include <string>
 #include <vector>
 
-namespace shazam {
+namespace audioviz {
 
 struct StftConfig {
     std::size_t frame_size = 1024;  // must be a power of two
@@ -47,4 +47,4 @@ double to_decibels(double magnitude, double reference, double floor_db = -80.0);
 
 // Write a binary PGM greyscale image with low frequencies at the bottom.
 bool write_pgm(const Spectrogram& spectrogram, const std::string& path);
-}  // namespace shazam
+}  // namespace audioviz

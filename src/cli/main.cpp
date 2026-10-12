@@ -1,5 +1,5 @@
-#include <shazam/audio.hpp>
-#include <shazam/stft.hpp>
+#include <audioviz/audio.hpp>
+#include <audioviz/stft.hpp>
 
 #include <print>
 #include <string>
@@ -11,7 +11,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    const auto audio = shazam::load_wav(argv[1]);
+    const auto audio = audioviz::load_wav(argv[1]);
     if (!audio) {
         std::println(stderr, "error: {}", audio.error());
         return 1;
@@ -22,8 +22,8 @@ int main(int argc, char** argv) {
     std::println("frames      : {}", audio->frame_count());
     std::println("duration    : {:.2f} s", audio->duration_seconds());
 
-    const std::vector<double> mono = shazam::to_mono(*audio);
-    const shazam::Spectrogram spectrogram = shazam::compute_spectrogram(mono, audio->sample_rate);
+    const std::vector<double> mono = audioviz::to_mono(*audio);
+    const audioviz::Spectrogram spectrogram = audioviz::compute_spectrogram(mono, audio->sample_rate);
 
     std::println("");
     std::println("spectrogram : {} frames x {} bins", spectrogram.frame_count, spectrogram.bin_count);
@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
     std::println("frame step  : {:.1f} ms", spectrogram.frame_time(1) * 1000.0);
 
     const std::string output = argc >= 3 ? argv[2] : "spectrogram.pgm";
-    if (!shazam::write_pgm(spectrogram, output)) {
+    if (!audioviz::write_pgm(spectrogram, output)) {
         std::println(stderr, "failed to write {}", output);
         return 1;
     }

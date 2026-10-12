@@ -16,7 +16,7 @@ variables:
   MACOS_RUNNER_TAG: saas-macos-medium-m1
   MACOS_IMAGE: macos-15-xcode-16
   # macOS runners on GitLab.com need a Premium or Ultimate plan, so that job is opt-in.
-  SHAZAM_CI_MACOS: "false"
+  AUDIOVIZ_CI_MACOS: "false"
 
 stages:
   - test
@@ -48,8 +48,8 @@ linux-gcc:
     - cmake --build build -j"$(nproc)"
     - ctest --test-dir build --output-on-failure --output-junit junit.xml
     - python3 ci/make_test_wav.py chirp.wav
-    - ./build/src/cli/shazam_cli chirp.wav chirp.pgm
-    - bash ci/gui_smoke.sh ./build/src/gui/shazam_gui chirp.wav
+    - ./build/src/cli/audioviz_cli chirp.wav chirp.pgm
+    - bash ci/gui_smoke.sh ./build/src/gui/audioviz_gui chirp.wav
 
 linux-clang:
   extends: .linux
@@ -69,7 +69,7 @@ linux-headless:
     - apt-get install -y -qq --no-install-recommends build-essential cmake g++-14 > /dev/null
   script:
     - export CC=gcc-14 CXX=g++-14
-    - cmake -B build -DCMAKE_BUILD_TYPE=Release -DSHAZAM_BUILD_GUI=OFF
+    - cmake -B build -DCMAKE_BUILD_TYPE=Release -DAUDIOVIZ_BUILD_GUI=OFF
     - cmake --build build -j"$(nproc)"
     - ctest --test-dir build --output-on-failure --output-junit junit.xml
 
@@ -97,7 +97,7 @@ windows-msvc:
     reports:
       junit: build/junit.xml
 
-# --- macOS: opt-in (set SHAZAM_CI_MACOS to "true") ---------------------------------------
+# --- macOS: opt-in (set AUDIOVIZ_CI_MACOS to "true") ---------------------------------------
 
 macos:
   stage: test
@@ -105,7 +105,7 @@ macos:
   tags:
     - $MACOS_RUNNER_TAG
   rules:
-    - if: $SHAZAM_CI_MACOS == "true"
+    - if: $AUDIOVIZ_CI_MACOS == "true"
   script:
     - command -v cmake || brew install cmake
     - cmake -B build -DCMAKE_BUILD_TYPE=Debug

@@ -1,19 +1,19 @@
 #include <gtest/gtest.h>
 
-#include <shazam/dft.hpp>
+#include <audioviz/dft.hpp>
 
 #include <cmath>
 #include <numbers>
 #include <vector>
 
-using shazam::complex;
+using audioviz::complex;
 
 namespace {
 TEST(DFT, ConstantSignalHasOnlyDcComponent) {
     const std::size_t n = 16;
     std::vector<complex> x(n, complex{1.0, 0.0});
 
-    const std::vector<complex> spectrum = shazam::dft(x);
+    const std::vector<complex> spectrum = audioviz::dft(x);
 
     EXPECT_NEAR(spectrum[0].real(), static_cast<double>(n), 1e-9);
     EXPECT_NEAR(spectrum[0].imag(), 0.0, 1e-9);
@@ -28,7 +28,7 @@ TEST(DFT, ImpulseHasFlatSpectrum) {
     std::vector<complex> x(n, complex{0.0, 0.0});
     x[0] = complex{1.0, 0.0};
 
-    const std::vector<complex> spectrum = shazam::dft(x);
+    const std::vector<complex> spectrum = audioviz::dft(x);
 
     for (std::size_t k = 0; k < n; k++) {
         EXPECT_NEAR(std::abs(spectrum[k] - complex{1.0, 0.0}), 0.0, 1e-9) << "bin " << k;
@@ -47,7 +47,7 @@ TEST(DFT, PureToneLandsInOneBin) {
         x[t] = complex{std::cos(angle), 0.0};
     }
 
-    const std::vector<complex> spectrum = shazam::dft(x);
+    const std::vector<complex> spectrum = audioviz::dft(x);
 
     EXPECT_NEAR(std::abs(spectrum[tone_bin]), n / 2.0, 1e-9);
     EXPECT_NEAR(std::abs(spectrum[n - tone_bin]), n / 2.0, 1e-9);
@@ -67,7 +67,7 @@ TEST(DFT, InverseUndoesForward) {
             complex{std::sin(0.3 * static_cast<double>(t)), std::cos(0.7) * static_cast<double>(t)};
     }
 
-    const std::vector<complex> restored = shazam::idft(shazam::dft(x));
+    const std::vector<complex> restored = audioviz::idft(audioviz::dft(x));
 
     for (std::size_t t = 0; t < n; t++) {
         EXPECT_NEAR(std::abs(restored[t] - x[t]), 0.0, 1e-9) << "sample " << t;

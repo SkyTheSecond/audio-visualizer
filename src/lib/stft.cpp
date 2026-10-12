@@ -1,13 +1,13 @@
-#include <shazam/stft.hpp>
+#include <audioviz/stft.hpp>
 
-#include <shazam/fft.hpp>
+#include <audioviz/fft.hpp>
 
 #include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <stdexcept>
 
-namespace shazam {
+namespace audioviz {
 double Spectrogram::bin_frequency(std::size_t bin) const {
     return static_cast<double>(bin) * static_cast<double>(sample_rate) /
            static_cast<double>(config.frame_size);
@@ -113,4 +113,4 @@ bool write_pgm(const Spectrogram& spectrogram, const std::string& path) {
 
     return out.good();
 }
-}  // namespace shazam
+}  // namespace audioviz

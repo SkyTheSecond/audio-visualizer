@@ -1,4 +1,4 @@
-#include <shazam/audio.hpp>
+#include <audioviz/audio.hpp>
 
 #include <cstdint>
 #include <cstring>
@@ -6,7 +6,7 @@
 #include <fstream>
 #include <iterator>
 
-namespace shazam {
+namespace audioviz {
 std::size_t AudioBuffer::frame_count() const {
     return channels > 0 ? samples.size() / static_cast<std::size_t>(channels) : 0;
 }
@@ -151,4 +151,4 @@ std::vector<double> to_mono(const AudioBuffer& audio) {
 
     return mono;
 }
-}  // namespace shazam
+}  // namespace audioviz

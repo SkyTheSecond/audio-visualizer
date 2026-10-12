@@ -8,11 +8,11 @@ to use GitLab.com's hosted runners or register your own, and how to read the res
 
 | Job | Runs on | What it does |
 |-----|---------|--------------|
-| `linux-gcc` | Docker, `ubuntu:24.04`, untagged | GCC 14 build with the GUI, all tests, then runs `shazam_cli` on a generated WAV and starts `shazam_gui` for 5 s on a virtual display (Xvfb + Mesa), failing on any OpenGL or GLFW error |
+| `linux-gcc` | Docker, `ubuntu:24.04`, untagged | GCC 14 build with the GUI, all tests, then runs `audioviz_cli` on a generated WAV and starts `audioviz_gui` for 5 s on a virtual display (Xvfb + Mesa), failing on any OpenGL or GLFW error |
 | `linux-clang` | Docker, `ubuntu:24.04`, untagged | Clang 19 build with the GUI, all tests |
-| `linux-headless` | Docker, `ubuntu:24.04`, untagged | Release build with `SHAZAM_BUILD_GUI=OFF` and only the compiler installed: proves the library, CLI and tests need no windowing packages |
+| `linux-headless` | Docker, `ubuntu:24.04`, untagged | Release build with `AUDIOVIZ_BUILD_GUI=OFF` and only the compiler installed: proves the library, CLI and tests need no windowing packages |
 | `windows-msvc` | Windows, PowerShell, tag `$WINDOWS_RUNNER_TAG` | Visual Studio (MSVC) build of everything, all tests |
-| `macos` | macOS, tag `$MACOS_RUNNER_TAG` | Apple Clang build of everything, all tests. **Only runs when `SHAZAM_CI_MACOS` is `"true"`.** |
+| `macos` | macOS, tag `$MACOS_RUNNER_TAG` | Apple Clang build of everything, all tests. **Only runs when `AUDIOVIZ_CI_MACOS` is `"true"`.** |
 
 All jobs are in one stage, so they run in parallel. Each publishes its test results as a
 JUnit report, so every individual GoogleTest case shows up in the pipeline's **Tests** tab.
@@ -27,7 +27,7 @@ or when running a pipeline manually (**Build > Pipelines > Run pipeline**) to ch
 | `WINDOWS_RUNNER_TAG` | `saas-windows-medium-amd64` | Tag the Windows job asks for. The default is GitLab.com's hosted Windows runner. |
 | `MACOS_RUNNER_TAG` | `saas-macos-medium-m1` | Tag the macOS job asks for. The default is GitLab.com's hosted Apple silicon runner. |
 | `MACOS_IMAGE` | `macos-15-xcode-16` | macOS image for GitLab.com's hosted runners. Ignored by your own runner with the shell executor. |
-| `SHAZAM_CI_MACOS` | `"false"` | Set to `"true"` to run the macOS job. |
+| `AUDIOVIZ_CI_MACOS` | `"false"` | Set to `"true"` to run the macOS job. |
 
 ## Option 1: GitLab.com's hosted runners
 
@@ -37,7 +37,7 @@ enabled for the project, then push.
 - **Linux** jobs are untagged, so GitLab.com's hosted Linux runners pick them up.
 - **Windows** uses the hosted Windows runner the default `WINDOWS_RUNNER_TAG` points at.
 - **macOS** hosted runners need a Premium or Ultimate plan. If you have one, set
-  `SHAZAM_CI_MACOS` to `"true"`. If `MACOS_IMAGE` is no longer offered, pick a current image
+  `AUDIOVIZ_CI_MACOS` to `"true"`. If `MACOS_IMAGE` is no longer offered, pick a current image
   from GitLab's documentation on hosted macOS runners and set the variable to it.
 
 Hosted runners spend your namespace's compute minutes, and Windows and macOS minutes cost
@@ -60,7 +60,7 @@ The flow is the same on every OS:
 4. Install GitLab Runner on the machine and register it with that token, as below.
    On a self-managed GitLab, use your instance's address instead of `https://gitlab.com`.
 5. For Windows or macOS, set `WINDOWS_RUNNER_TAG` or `MACOS_RUNNER_TAG` to the tag from
-   step 2 (and `SHAZAM_CI_MACOS` to `"true"` for macOS).
+   step 2 (and `AUDIOVIZ_CI_MACOS` to `"true"` for macOS).
 
 ### Linux (Docker executor)
 
@@ -112,7 +112,7 @@ gitlab-runner register --url https://gitlab.com --token glrt-XXXXXXXX --executor
 brew services start gitlab-runner
 ```
 
-The job runs as your user, with your Xcode and Homebrew. Set `SHAZAM_CI_MACOS` to `"true"`
+The job runs as your user, with your Xcode and Homebrew. Set `AUDIOVIZ_CI_MACOS` to `"true"`
 and `MACOS_RUNNER_TAG` to the runner's tag.
 
 ## Reading the results
@@ -138,7 +138,7 @@ docker run --rm -v "$PWD":/src -w /src ubuntu:24.04 bash -c '
   set -e
   apt-get update -qq
   DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends build-essential cmake g++-14 > /dev/null
-  CC=gcc-14 CXX=g++-14 cmake -B build-docker -DCMAKE_BUILD_TYPE=Release -DSHAZAM_BUILD_GUI=OFF
+  CC=gcc-14 CXX=g++-14 cmake -B build-docker -DCMAKE_BUILD_TYPE=Release -DAUDIOVIZ_BUILD_GUI=OFF
   cmake --build build-docker -j"$(nproc)"
   ctest --test-dir build-docker --output-on-failure'
 ```

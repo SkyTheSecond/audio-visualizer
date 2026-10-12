@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace shazam {
+namespace audioviz {
 
 // Decoded PCM audio, normalised to roughly [-1.0, 1.0].
 // Samples are interleaved: for stereo, L R L R L R ...
@@ -27,4 +27,4 @@ std::expected<AudioBuffer, std::string> load_wav(const std::filesystem::path& pa
 
 // Average all channels down to one. Mono input is returned unchanged.
 std::vector<double> to_mono(const AudioBuffer& audio);
-}  // namespace shazam
+}  // namespace audioviz

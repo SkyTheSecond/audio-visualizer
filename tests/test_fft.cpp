@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <shazam/dft.hpp>
-#include <shazam/fft.hpp>
+#include <audioviz/dft.hpp>
+#include <audioviz/fft.hpp>
 
 #include <cmath>
 #include <numbers>
@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <vector>
 
-using shazam::complex;
+using audioviz::complex;
 
 namespace {
 
@@ -35,30 +35,30 @@ TEST(FFTRecursive, MatchesNaiveDFT) {
     for (std::size_t n : {1u, 2u, 4u, 8u, 64u, 256u, 1024u}) {
         const std::vector<complex> x = random_signal(n);
 
-        EXPECT_LT(max_difference(shazam::fft_recursive(x), shazam::dft(x)), 1e-9) << "n = " << n;
+        EXPECT_LT(max_difference(audioviz::fft_recursive(x), audioviz::dft(x)), 1e-9) << "n = " << n;
     }
 }
 
 TEST(FFTRecursive, InverseUndoesForward) {
     for (std::size_t n : {2u, 16u, 512u}) {
         const std::vector<complex> x = random_signal(n);
-        const std::vector<complex> spectrum = shazam::fft_recursive(x);
+        const std::vector<complex> spectrum = audioviz::fft_recursive(x);
 
-        const std::vector<complex> restored = shazam::fft_recursive(spectrum, true);
+        const std::vector<complex> restored = audioviz::fft_recursive(spectrum, true);
         EXPECT_LT(max_difference(restored, x), 1e-9) << "n = " << n;
     }
 }
 
 TEST(FFTRecursive, RejectsNonPowerOfTwo) {
     const std::vector<complex> x(100);
-    EXPECT_THROW(shazam::fft_recursive(x), std::invalid_argument);
+    EXPECT_THROW(audioviz::fft_recursive(x), std::invalid_argument);
 }
 
 TEST(FFT, MatchesNaiveDFT) {
     for (std::size_t n : {1u, 2u, 4u, 8u, 64u, 256u, 1024u}) {
         const std::vector<complex> x = random_signal(n);
 
-        EXPECT_LT(max_difference(shazam::fft(x), shazam::dft(x)), 1e-9) << "n = " << n;
+        EXPECT_LT(max_difference(audioviz::fft(x), audioviz::dft(x)), 1e-9) << "n = " << n;
     }
 }
 
@@ -66,16 +66,16 @@ TEST(FFT, MatchesRecursive) {
     for (std::size_t n : {1u, 2u, 4u, 8u, 64u, 256u, 1024u}) {
         const std::vector<complex> x = random_signal(n);
 
-        EXPECT_LT(max_difference(shazam::fft(x), shazam::fft_recursive(x)), 1e-9) << "n = " << n;
+        EXPECT_LT(max_difference(audioviz::fft(x), audioviz::fft_recursive(x)), 1e-9) << "n = " << n;
     }
 }
 
 TEST(FFT, InverseUndoesForward) {
     for (std::size_t n : {2u, 16u, 512u}) {
         const std::vector<complex> x = random_signal(n);
-        const std::vector<complex> spectrum = shazam::fft(x);
+        const std::vector<complex> spectrum = audioviz::fft(x);
 
-        const std::vector<complex> restored = shazam::ifft(spectrum);
+        const std::vector<complex> restored = audioviz::ifft(spectrum);
         EXPECT_LT(max_difference(restored, x), 1e-9) << "n = " << n;
     }
 }
@@ -85,7 +85,7 @@ TEST(FFT, ImpulseHasFlatSpectrum) {
     std::vector<complex> x(n, complex{0.0, 0.0});
     x[0] = complex{1.0, 0.0};
 
-    for (const complex& bin : shazam::fft(x)) {
+    for (const complex& bin : audioviz::fft(x)) {
         EXPECT_NEAR(std::abs(bin - complex{1.0, 0.0}), 0.0, 1e-12);
     }
 }
@@ -100,7 +100,7 @@ TEST(FFT, PureToneLandsInOneBin) {
                         static_cast<double>(t) / static_cast<double>(n));
     }
 
-    const std::vector<complex> spectrum = shazam::fft(std::span<const double>(x));
+    const std::vector<complex> spectrum = audioviz::fft(std::span<const double>(x));
 
     EXPECT_NEAR(std::abs(spectrum[tone_bin]), n / 2.0, 1e-6);
     EXPECT_NEAR(std::abs(spectrum[n - tone_bin]), n / 2.0, 1e-6);
@@ -116,7 +116,7 @@ TEST(FFT, PureToneLandsInOneBin) {
 TEST(FFT, ConservesEnergy) {
     const std::size_t n = 256;
     const std::vector<complex> x = random_signal(n);
-    const std::vector<complex> spectrum = shazam::fft(x);
+    const std::vector<complex> spectrum = audioviz::fft(x);
 
     double time_energy = 0.0;
     for (const complex& value : x) {
@@ -133,6 +133,6 @@ TEST(FFT, ConservesEnergy) {
 
 TEST(FFT, RejectsNonPowerOfTwo) {
     const std::vector<complex> x(100);
-    EXPECT_THROW(shazam::fft(x), std::invalid_argument);
+    EXPECT_THROW(audioviz::fft(x), std::invalid_argument);
 }
 }  // namespace

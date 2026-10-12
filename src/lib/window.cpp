@@ -1,10 +1,10 @@
-#include <shazam/window.hpp>
+#include <audioviz/window.hpp>
 
 #include <cmath>
 #include <numbers>
 #include <stdexcept>
 
-namespace shazam {
+namespace audioviz {
 std::string_view window_name(WindowType type) {
     switch (type) {
         case WindowType::Rectangular:
@@ -53,4 +53,4 @@ void apply_window(std::span<double> frame, std::span<const double> window) {
         frame[i] *= window[i];
     }
 }
-}  // namespace shazam
+}  // namespace audioviz
