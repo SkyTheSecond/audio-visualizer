@@ -3,6 +3,8 @@
 #include <shazam/dft.hpp>
 #include <shazam/fft.hpp>
 
+#include <cmath>
+#include <numbers>
 #include <random>
 #include <stdexcept>
 #include <vector>

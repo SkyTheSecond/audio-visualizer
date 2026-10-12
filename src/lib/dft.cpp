@@ -1,5 +1,8 @@
 #include <shazam/dft.hpp>
 
+#include <cmath>
+#include <numbers>
+
 namespace shazam {
 namespace {
 std::vector<complex> transform(std::span<const complex> input, double sign) {
