@@ -5,4 +5,4 @@ add_executable(shazam_gui
 )
 
 target_link_libraries(shazam_gui PRIVATE shazam imgui glad)
-target_compile_options(shazam_gui PRIVATE -Wall -Wextra)
+target_compile_options(shazam_gui PRIVATE ${SHAZAM_WARNINGS})

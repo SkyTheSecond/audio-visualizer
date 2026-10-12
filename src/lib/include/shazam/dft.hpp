@@ -1,12 +1,14 @@
 #pragma once
 
 #include <complex>
+#include <cstddef>
+#include <cstdint>
 #include <span>
 #include <vector>
 
 namespace shazam {
 
-using u32 = uint32_t;
+using u32 = std::uint32_t;
 using usize = std::size_t;
 using complex = std::complex<double>;
 

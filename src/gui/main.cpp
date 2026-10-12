@@ -13,6 +13,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
+#include <array>
 #include <cstdint>
 #include <cstdio>
 #include <format>
@@ -22,18 +23,39 @@
 
 namespace {
 
-// The OpenGL version we ask for. macOS stops at 4.1 core, so it gets that; the texture
-// code falls back to bind-to-edit when Direct State Access (4.5) isn't there.
-#ifdef __APPLE__
-constexpr int kGlMajor = 4;
-constexpr int kGlMinor = 1;
-#else
-constexpr int kGlMajor = 4;
-constexpr int kGlMinor = 6;
-#endif
+struct GlVersion {
+    int major;
+    int minor;
+};
+
+// Core-profile versions to try, newest first. 4.6 is the target; 4.5 still has Direct State
+// Access and 4.3 still has debug output (both have fallbacks below). 4.1 is the macOS
+// ceiling, and 3.3 is the oldest that ImGui's OpenGL3 backend is happy with.
+constexpr std::array<GlVersion, 5> kGlVersions{{{4, 6}, {4, 5}, {4, 3}, {4, 1}, {3, 3}}};
 
 void on_glfw_error(int code, const char* description) {
     std::fprintf(stderr, "GLFW error %d: %s\n", code, description);
+}
+
+// Create the window on the newest core context the driver offers, or nullptr.
+GLFWwindow* create_window() {
+    // Unavailable versions are expected while probing; keep only the last complaint.
+    static std::string last_error;
+    glfwSetErrorCallback([](int, const char* description) { last_error = description; });
+
+    GLFWwindow* window = nullptr;
+    for (const GlVersion version : kGlVersions) {
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, version.major);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, version.minor);
+        window = glfwCreateWindow(1280, 720, "shazam - spectrogram", nullptr, nullptr);
+        if (window != nullptr) break;
+    }
+
+    glfwSetErrorCallback(on_glfw_error);
+    if (window == nullptr) {
+        std::fprintf(stderr, "no OpenGL 3.3+ core context available: %s\n", last_error.c_str());
+    }
+    return window;
 }
 
 // glGetString returns unsigned bytes. Wrap it so callers get a normal string.
@@ -104,21 +126,17 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    // Window hints must be set BEFORE the window is created.
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, kGlMajor);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, kGlMinor);
+    // Window hints must be set BEFORE the window is created. create_window() adds the version.
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-#ifdef __APPLE__
-    // macOS only hands out 3.2+ core contexts when they are forward-compatible.
+    // Required by macOS for any 3.2+ core context; harmless elsewhere, since core already
+    // drops everything forward-compatible mode removes.
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-#endif
 #ifndef NDEBUG
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
 #endif
 
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "shazam - spectrogram", nullptr, nullptr);
+    GLFWwindow* window = create_window();
     if (window == nullptr) {
-        std::fprintf(stderr, "failed to create a %d.%d core window\n", kGlMajor, kGlMinor);
         glfwTerminate();
         return 1;
     }
@@ -151,9 +169,11 @@ int main(int argc, char** argv) {
     // The second argument installs ImGui's GLFW callbacks (mouse, keyboard, scroll).
     ImGui_ImplGlfw_InitForOpenGL(window, true);
 
-    // ImGui compiles its own shaders, so it needs the GLSL version matching our context.
-    // Built from the same constants so the two can never disagree.
-    const std::string glsl_version = std::format("#version {}{}0 core", kGlMajor, kGlMinor);
+    // ImGui compiles its own shaders, so it needs the GLSL version matching the context we
+    // actually got (from 3.3 on, GLSL 4.1 is "410", 3.3 is "330", and so on).
+    const int gl_major = glfwGetWindowAttrib(window, GLFW_CONTEXT_VERSION_MAJOR);
+    const int gl_minor = glfwGetWindowAttrib(window, GLFW_CONTEXT_VERSION_MINOR);
+    const std::string glsl_version = std::format("#version {}{}0 core", gl_major, gl_minor);
     ImGui_ImplOpenGL3_Init(glsl_version.c_str());
 
     const std::string gl_info = std::format("{}\n{}", gl_string(GL_VERSION), gl_string(GL_RENDERER));

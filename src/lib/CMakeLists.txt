@@ -12,5 +12,5 @@ target_include_directories(shazam PUBLIC
 )
 
 target_compile_options(shazam PRIVATE
-    -Wall -Wextra -Wpedantic
+    ${SHAZAM_STRICT_WARNINGS}
 )

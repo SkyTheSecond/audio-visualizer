@@ -2,3 +2,5 @@ build/
 *.pgm
 *.db
 imgui.ini
+compile_commands.json
+build-*/

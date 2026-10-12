@@ -14,4 +14,5 @@ target_include_directories(imgui PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/backends
 )
 
-target_link_libraries(imgui PUBLIC glfw)
+# The OpenGL3 backend dlopen()s libGL on Linux; older glibc keeps dlopen in libdl.
+target_link_libraries(imgui PUBLIC glfw ${CMAKE_DL_LIBS})
