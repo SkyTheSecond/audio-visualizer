@@ -1,0 +1,175 @@
+# GitHub Actions: the same jobs as .gitlab-ci.yml, on GitHub's hosted runners.
+# Setup and the variables you can set: docs/github-actions.md
+
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push to the same branch or pull request cancels the run it replaces.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Linux and macOS jobs fail on any compiler warning in our code. Windows gets the same
+  # once its first run shows MSVC is warning-free too (see the windows-msvc job).
+  WERROR: -DAUDIOVIZ_WARNINGS_AS_ERRORS=ON
+  DEBIAN_FRONTEND: noninteractive
+
+# Linux jobs run in an ubuntu:24.04 container, not on the runner's own Ubuntu, so they get
+# exactly the README's packages and nothing the runner image happens to have preinstalled.
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    container: ubuntu:24.04
+    defaults:
+      run:
+        shell: bash
+    steps:
+      # git before checkout, so it makes a real clone: ci/lint.sh asks git for the file list.
+      - run: |
+          apt-get update -qq
+          apt-get install -y -qq --no-install-recommends ca-certificates git build-essential cmake pkg-config xorg-dev \
+            libwayland-dev libxkbcommon-dev wayland-protocols g++-14 clang-19 clang-tidy-19 clang-format-19 > /dev/null
+      - uses: actions/checkout@v5
+      - name: clang-format and clang-tidy
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          export CC=clang-19 CXX=clang++-19
+          # Configuring is enough: clang-tidy reads compile_commands.json, it needs no build.
+          cmake -B build -DCMAKE_BUILD_TYPE=Debug
+          CLANG_FORMAT=clang-format-19 CLANG_TIDY=clang-tidy-19 bash ci/lint.sh build
+
+  linux-gcc:
+    runs-on: ubuntu-24.04
+    container: ubuntu:24.04
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install packages
+        run: |
+          apt-get update -qq
+          # The README's Debian/Ubuntu packages (Ubuntu 24.04's default g++ is 13: too old),
+          # plus python3 to make a test WAV and Xvfb + Mesa for a display.
+          apt-get install -y -qq --no-install-recommends build-essential cmake pkg-config xorg-dev \
+            libwayland-dev libxkbcommon-dev wayland-protocols g++-14 python3 xvfb xauth libgl1-mesa-dri > /dev/null
+      - name: Build
+        run: |
+          export CC=gcc-14 CXX=g++-14
+          cmake -B build -DCMAKE_BUILD_TYPE=Debug $WERROR
+          cmake --build build -j"$(nproc)"
+      - name: Test
+        run: ctest --test-dir build --output-on-failure --output-junit junit.xml
+      - name: Run the programs
+        run: |
+          python3 ci/make_test_wav.py chirp.wav
+          ./build/src/cli/audioviz_cli chirp.wav chirp.pgm
+          bash ci/gui_smoke.sh ./build/src/gui/audioviz_gui chirp.wav
+          # No sound card in the container: the player falls back to miniaudio's silent output.
+          bash ci/gui_smoke.sh ./build/src/player/audioviz_player chirp.wav
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit-linux-gcc
+          path: build/junit.xml
+
+  linux-clang:
+    runs-on: ubuntu-24.04
+    container: ubuntu:24.04
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install packages
+        run: |
+          apt-get update -qq
+          # Clang 19, not Ubuntu's default 18: Clang 18 with GCC's library has no std::expected.
+          apt-get install -y -qq --no-install-recommends build-essential cmake pkg-config xorg-dev \
+            libwayland-dev libxkbcommon-dev wayland-protocols g++-14 clang-19 > /dev/null
+      - name: Build
+        run: |
+          export CC=clang-19 CXX=clang++-19
+          cmake -B build -DCMAKE_BUILD_TYPE=Debug $WERROR
+          cmake --build build -j"$(nproc)"
+      - name: Test
+        run: ctest --test-dir build --output-on-failure --output-junit junit.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit-linux-clang
+          path: build/junit.xml
+
+  linux-headless:
+    runs-on: ubuntu-24.04
+    container: ubuntu:24.04
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+      # Library, CLI and tests only: proves none of it needs the windowing packages.
+      - name: Install packages
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq --no-install-recommends build-essential cmake g++-14 > /dev/null
+      - name: Build
+        run: |
+          export CC=gcc-14 CXX=g++-14
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DAUDIOVIZ_BUILD_GUI=OFF $WERROR
+          cmake --build build -j"$(nproc)"
+      - name: Test
+        run: ctest --test-dir build --output-on-failure --output-junit junit.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit-linux-headless
+          path: build/junit.xml
+
+  windows-msvc:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      # The runner image has Visual Studio with the C++ tools, and CMake on PATH.
+      # No -G: CMake picks the newest Visual Studio generator it finds. That generator is
+      # multi-config, so the build type is chosen at build and test time.
+      # Not yet warnings-as-errors: once a run shows no MSVC warnings, add $env:WERROR here.
+      - name: Build
+        run: |
+          cmake --version
+          cmake -S . -B build -A x64
+          cmake --build build --config Debug --parallel
+      - name: Test
+        run: ctest --test-dir build -C Debug --output-on-failure --output-junit junit.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit-windows-msvc
+          path: build/junit.xml
+
+  macos:
+    # On unless the repository variable AUDIOVIZ_CI_MACOS is "false".
+    if: vars.AUDIOVIZ_CI_MACOS != 'false'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build
+        run: |
+          command -v cmake || brew install cmake
+          cmake -B build -DCMAKE_BUILD_TYPE=Debug $WERROR
+          cmake --build build -j"$(sysctl -n hw.ncpu)"
+      - name: Test
+        run: ctest --test-dir build --output-on-failure --output-junit junit.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit-macos
+          path: build/junit.xml

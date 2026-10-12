@@ -151,7 +151,6 @@ IrfanView on Windows.
 |--------|---------|--------|
 | `-DAUDIOVIZ_BUILD_GUI=OFF` | `ON` | Build only the library, CLI and tests. No windowing packages needed: for servers and headless CI. |
 | `-DCMAKE_BUILD_TYPE=Release` | none | Optimised build (single-config generators). Debug builds are several times slower on long files. |
-| `-DAUDIOVIZ_WARNINGS_AS_ERRORS=ON` | `OFF` | Any compiler warning in our own code fails the build. CI turns this on. |
 
 ## OpenGL
 
@@ -165,39 +164,13 @@ The viewer asks for the newest core-profile context the driver offers, trying 4.
 macOS stops at OpenGL 4.1, so there you get 4.1 without either feature. Linux (Mesa,
 NVIDIA) and Windows drivers normally provide 4.5 or 4.6.
 
-## Code style
-
-`.clang-format` and `.clang-tidy` encode the project's style: 4-space indents, 100 columns,
-snake_case for functions, variables and constants, PascalCase for types and enum values, and
-a trailing `_` on private members. clang-tidy also runs bug-finding checks. CI enforces both,
-using version 19 of each tool, since other versions can format slightly differently.
-
-Formatting, on any OS (clang-format 19 from pip, in a virtual environment):
-
-```bash
-python3 -m venv ~/.venvs/clang19 && ~/.venvs/clang19/bin/pip install clang-format==19.1.1
-git ls-files 'src/*.[ch]pp' 'tests/*.[ch]pp' | xargs ~/.venvs/clang19/bin/clang-format -i
-```
-
-Most editors (VS Code with clangd, CLion, Visual Studio) pick up `.clang-format` and can
-format on save.
-
-The full check, formatting plus clang-tidy, is `ci/lint.sh`. On Ubuntu 24.04:
-
-```bash
-sudo apt install clang-19 clang-tidy-19 clang-format-19
-CC=clang-19 CXX=clang++-19 cmake -B build-lint
-CLANG_FORMAT=clang-format-19 CLANG_TIDY=clang-tidy-19 ci/lint.sh build-lint
-```
-
-On macOS and Windows, run it in Docker instead (the command is in
-[docs/gitlab-ci.md](docs/gitlab-ci.md#running-the-linux-jobs-on-your-own-machine)): clang-tidy 19
-can't read the C++ headers of a current Xcode. `ci/lint.sh` checks the files git tracks, so
-`git add` new files first.
-
 ## Continuous integration
 
-`.gitlab-ci.yml` checks formatting and clang-tidy, then builds and tests on Linux (GCC 14,
-Clang 19, and a headless build), on Windows with MSVC, and optionally on macOS. The Linux GCC
-job also runs the CLI and starts the viewer and the player on a virtual display. Runner setup and the variables you can set are in
+`.gitlab-ci.yml` builds and tests on Linux (GCC 14, Clang 19, and a headless build),
+on Windows with MSVC, and optionally on macOS. The Linux GCC job also runs the CLI and starts
+the viewer on a virtual display. Runner setup and the variables you can set are in
 [docs/gitlab-ci.md](docs/gitlab-ci.md).
+
+`.github/workflows/ci.yml` runs the same jobs on GitHub Actions, using GitHub's hosted
+runners, with macOS on by default. How to turn it on, what it costs and how to read the
+results are in [docs/github-actions.md](docs/github-actions.md).
