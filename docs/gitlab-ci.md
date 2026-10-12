@@ -134,7 +134,7 @@ and `MACOS_RUNNER_TAG` to the runner's tag.
   brackets at the end of the line. The README's *Code style* section shows how to run the
   same check locally.
 
-## Running the Linux job on your own machine
+## Running the Linux jobs on your own machine
 
 With Docker installed, this repeats the `linux-headless` job's steps in a throwaway
 container, from the repository root. It builds in `build-docker` so it never touches your
@@ -150,4 +150,18 @@ docker run --rm -v "$PWD":/src -w /src ubuntu:24.04 bash -c '
   ctest --test-dir build-docker --output-on-failure'
 ```
 
-Delete `build-docker` afterwards; it is owned by root because the container ran as root.
+The `lint` job the same way (works from macOS and Windows too, which is the easy way to run
+clang-tidy 19 there):
+
+```bash
+docker run --rm -v "$PWD":/src -w /src ubuntu:24.04 bash -c '
+  set -e
+  apt-get update -qq
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends build-essential cmake git pkg-config xorg-dev libwayland-dev libxkbcommon-dev wayland-protocols clang-19 clang-tidy-19 clang-format-19 g++-14 > /dev/null
+  git config --global --add safe.directory /src
+  CC=clang-19 CXX=clang++-19 cmake -B build-lint > /dev/null
+  CLANG_FORMAT=clang-format-19 CLANG_TIDY=clang-tidy-19 ci/lint.sh build-lint'
+```
+
+Delete `build-docker` and `build-lint` afterwards; they are owned by root because the
+container ran as root.

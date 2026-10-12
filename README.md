@@ -172,16 +172,28 @@ snake_case for functions, variables and constants, PascalCase for types and enum
 a trailing `_` on private members. clang-tidy also runs bug-finding checks. CI enforces both,
 using version 19 of each tool, since other versions can format slightly differently.
 
+Formatting, on any OS (clang-format 19 from pip, in a virtual environment):
+
 ```bash
-# Get version 19 on any OS with pip (in a venv): pip install clang-format==19.1.1 clang-tidy==19.1.0
-# On Ubuntu: apt install clang-format-19 clang-tidy-19, then set CLANG_FORMAT=clang-format-19
-# CLANG_TIDY=clang-tidy-19 for ci/lint.sh
-git ls-files 'src/*.[ch]pp' 'tests/*.[ch]pp' | xargs clang-format -i   # fix formatting
-ci/lint.sh build                                                         # check both, like CI
+python3 -m venv ~/.venvs/clang19 && ~/.venvs/clang19/bin/pip install clang-format==19.1.1
+git ls-files 'src/*.[ch]pp' 'tests/*.[ch]pp' | xargs ~/.venvs/clang19/bin/clang-format -i
 ```
 
 Most editors (VS Code with clangd, CLion, Visual Studio) pick up `.clang-format` and can
-format on save. `ci/lint.sh` checks the files git tracks, so `git add` new files first.
+format on save.
+
+The full check, formatting plus clang-tidy, is `ci/lint.sh`. On Ubuntu 24.04:
+
+```bash
+sudo apt install clang-19 clang-tidy-19 clang-format-19
+CC=clang-19 CXX=clang++-19 cmake -B build-lint
+CLANG_FORMAT=clang-format-19 CLANG_TIDY=clang-tidy-19 ci/lint.sh build-lint
+```
+
+On macOS and Windows, run it in Docker instead (the command is in
+[docs/gitlab-ci.md](docs/gitlab-ci.md#running-the-linux-jobs-on-your-own-machine)): clang-tidy 19
+can't read the C++ headers of a current Xcode. `ci/lint.sh` checks the files git tracks, so
+`git add` new files first.
 
 ## Continuous integration
 
