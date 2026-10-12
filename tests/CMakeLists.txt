@@ -3,6 +3,7 @@ add_executable(shazam_tests
     test_dft.cpp
     test_fft.cpp
     test_window.cpp
+    test_audio.cpp
 )
 
 target_link_libraries(shazam_tests PRIVATE shazam GTest::gtest_main)
