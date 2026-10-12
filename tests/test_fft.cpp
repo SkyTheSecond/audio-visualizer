@@ -35,7 +35,8 @@ TEST(FFTRecursive, MatchesNaiveDFT) {
     for (std::size_t n : {1u, 2u, 4u, 8u, 64u, 256u, 1024u}) {
         const std::vector<complex> x = random_signal(n);
 
-        EXPECT_LT(max_difference(audioviz::fft_recursive(x), audioviz::dft(x)), 1e-9) << "n = " << n;
+        EXPECT_LT(max_difference(audioviz::fft_recursive(x), audioviz::dft(x)), 1e-9)
+            << "n = " << n;
     }
 }
 
@@ -66,7 +67,8 @@ TEST(FFT, MatchesRecursive) {
     for (std::size_t n : {1u, 2u, 4u, 8u, 64u, 256u, 1024u}) {
         const std::vector<complex> x = random_signal(n);
 
-        EXPECT_LT(max_difference(audioviz::fft(x), audioviz::fft_recursive(x)), 1e-9) << "n = " << n;
+        EXPECT_LT(max_difference(audioviz::fft(x), audioviz::fft_recursive(x)), 1e-9)
+            << "n = " << n;
     }
 }
 

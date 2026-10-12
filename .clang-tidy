@@ -1,0 +1,49 @@
+# Bug-finding checks plus the naming style of the original code. Style-only checks that
+# would argue with that code (braces around one-line ifs, trailing return types, magic
+# numbers in DSP formulas) are deliberately left out, and so are:
+#  - bugprone-exception-escape: it flags main() for anything that might throw, but an
+#    uncaught exception there already ends the program with its message printed.
+#  - performance-enum-size: shrinking a three-value enum to one byte saves nothing.
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-exception-escape,
+  clang-analyzer-*,
+  performance-*,
+  -performance-enum-size,
+  modernize-use-nullptr,
+  modernize-use-override,
+  modernize-use-using,
+  readability-identifier-naming,
+  readability-redundant-*,
+  readability-misleading-indentation
+
+WarningsAsErrors: '*'
+
+# Our own headers only; findings inside vendored code are not ours to fix.
+HeaderFilterRegex: '.*'
+ExcludeHeaderFilterRegex: '.*/third_party/.*'
+
+CheckOptions:
+  # Types and enum values: PascalCase (WindowType::Hann, AudioBuffer).
+  readability-identifier-naming.ClassCase: CamelCase
+  readability-identifier-naming.StructCase: CamelCase
+  readability-identifier-naming.EnumCase: CamelCase
+  readability-identifier-naming.EnumConstantCase: CamelCase
+  # Type aliases read like built-in types: complex, u32, usize.
+  readability-identifier-naming.TypeAliasCase: lower_case
+  readability-identifier-naming.TypedefCase: lower_case
+  # Everything else snake_case, constants included.
+  readability-identifier-naming.NamespaceCase: lower_case
+  readability-identifier-naming.FunctionCase: lower_case
+  readability-identifier-naming.MethodCase: lower_case
+  readability-identifier-naming.VariableCase: lower_case
+  readability-identifier-naming.ParameterCase: lower_case
+  readability-identifier-naming.MemberCase: lower_case
+  # Single capital letters are fine for maths (the E and O halves of an FFT).
+  readability-identifier-naming.VariableIgnoredRegexp: '^[A-Z]$'
+  readability-identifier-naming.ParameterIgnoredRegexp: '^[A-Z]$'
+  # Private and protected data members end in an underscore: id_, width_.
+  readability-identifier-naming.PrivateMemberSuffix: _
+  readability-identifier-naming.ProtectedMemberSuffix: _

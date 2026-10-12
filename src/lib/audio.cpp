@@ -30,9 +30,9 @@ std::uint32_t read_u32(const unsigned char* p) {
 bool tag_equals(const unsigned char* p, const char* tag) { return std::memcmp(p, tag, 4) == 0; }
 
 // Values of the wFormatTag field in the fmt chunk.
-constexpr std::uint16_t kFormatPcm = 0x0001;
-constexpr std::uint16_t kFormatFloat = 0x0003;
-constexpr std::uint16_t kFormatExtensible = 0xFFFE;
+constexpr std::uint16_t format_pcm = 0x0001;
+constexpr std::uint16_t format_float = 0x0003;
+constexpr std::uint16_t format_extensible = 0xFFFE;
 }  // namespace
 
 std::expected<AudioBuffer, std::string> load_wav(const std::filesystem::path& path) {
@@ -77,7 +77,7 @@ std::expected<AudioBuffer, std::string> load_wav(const std::filesystem::path& pa
             bits_per_sample = read_u16(&bytes[body + 14]);
 
             // WAVE_FORMAT_EXTENSIBLE hides the real tag in the first two bytes of a GUID.
-            if (format == kFormatExtensible && chunk_size >= 40) {
+            if (format == format_extensible && chunk_size >= 40) {
                 format = read_u16(&bytes[body + 24]);
             }
             have_format = true;
@@ -104,7 +104,7 @@ std::expected<AudioBuffer, std::string> load_wav(const std::filesystem::path& pa
     audio.sample_rate = static_cast<int>(sample_rate);
     audio.channels = static_cast<int>(channels);
 
-    if (format == kFormatPcm && bits_per_sample == 16) {
+    if (format == format_pcm && bits_per_sample == 16) {
         const std::size_t count = data_size / 2;
         audio.samples.resize(count);
 
@@ -112,7 +112,7 @@ std::expected<AudioBuffer, std::string> load_wav(const std::filesystem::path& pa
             const auto raw = static_cast<std::int16_t>(read_u16(data_start + i * 2));
             audio.samples[i] = static_cast<double>(raw) / 32768.0;
         }
-    } else if (format == kFormatFloat && bits_per_sample == 32) {
+    } else if (format == format_float && bits_per_sample == 32) {
         const std::size_t count = data_size / 4;
         audio.samples.resize(count);
 

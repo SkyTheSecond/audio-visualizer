@@ -17,9 +17,19 @@ variables:
   MACOS_IMAGE: macos-15-xcode-16
   # macOS runners on GitLab.com need a Premium or Ultimate plan, so that job is opt-in.
   AUDIOVIZ_CI_MACOS: "false"
+  # Linux and macOS jobs fail on any compiler warning in our code. Windows gets the same
+  # once its first run shows MSVC is warning-free too (see the windows-msvc job).
+  WERROR: -DAUDIOVIZ_WARNINGS_AS_ERRORS=ON
 
 stages:
   - test
+
+# Every job that runs the tests publishes them to the pipeline's Tests tab.
+.junit:
+  artifacts:
+    when: always
+    reports:
+      junit: build/junit.xml
 
 # --- Linux: ubuntu:24.04 in Docker, on any runner that takes untagged jobs ---------------
 
@@ -33,18 +43,25 @@ stages:
     # Exactly the README's Debian/Ubuntu packages (Ubuntu 24.04's default g++ is 13: too old).
     - apt-get install -y -qq --no-install-recommends build-essential cmake pkg-config xorg-dev
       libwayland-dev libxkbcommon-dev wayland-protocols g++-14 > /dev/null
-  artifacts:
-    when: always
-    reports:
-      junit: build/junit.xml
+
+lint:
+  extends: .linux
+  # Formatting (.clang-format) and clang-tidy (.clang-tidy) on src/ and tests/.
+  script:
+    - apt-get install -y -qq --no-install-recommends git clang-19 clang-tidy-19 clang-format-19 > /dev/null
+    - git config --global --add safe.directory "$CI_PROJECT_DIR"
+    - export CC=clang-19 CXX=clang++-19
+    # Configuring is enough: clang-tidy reads compile_commands.json, it needs no build.
+    - cmake -B build -DCMAKE_BUILD_TYPE=Debug
+    - CLANG_FORMAT=clang-format-19 CLANG_TIDY=clang-tidy-19 bash ci/lint.sh build
 
 linux-gcc:
-  extends: .linux
+  extends: [.linux, .junit]
   script:
     # Extras for running the programs: python3 makes a test WAV, Xvfb + Mesa give a display.
     - apt-get install -y -qq --no-install-recommends python3 xvfb xauth libgl1-mesa-dri > /dev/null
     - export CC=gcc-14 CXX=g++-14
-    - cmake -B build -DCMAKE_BUILD_TYPE=Debug
+    - cmake -B build -DCMAKE_BUILD_TYPE=Debug $WERROR
     - cmake --build build -j"$(nproc)"
     - ctest --test-dir build --output-on-failure --output-junit junit.xml
     - python3 ci/make_test_wav.py chirp.wav
@@ -52,30 +69,31 @@ linux-gcc:
     - bash ci/gui_smoke.sh ./build/src/gui/audioviz_gui chirp.wav
 
 linux-clang:
-  extends: .linux
+  extends: [.linux, .junit]
   script:
     # Clang 19, not Ubuntu's default 18: Clang 18 with GCC's library has no std::expected.
     - apt-get install -y -qq --no-install-recommends clang-19 > /dev/null
     - export CC=clang-19 CXX=clang++-19
-    - cmake -B build -DCMAKE_BUILD_TYPE=Debug
+    - cmake -B build -DCMAKE_BUILD_TYPE=Debug $WERROR
     - cmake --build build -j"$(nproc)"
     - ctest --test-dir build --output-on-failure --output-junit junit.xml
 
 linux-headless:
-  extends: .linux
+  extends: [.linux, .junit]
   # Library, CLI and tests only: proves none of it needs the windowing packages.
   before_script:
     - apt-get update -qq
     - apt-get install -y -qq --no-install-recommends build-essential cmake g++-14 > /dev/null
   script:
     - export CC=gcc-14 CXX=g++-14
-    - cmake -B build -DCMAKE_BUILD_TYPE=Release -DAUDIOVIZ_BUILD_GUI=OFF
+    - cmake -B build -DCMAKE_BUILD_TYPE=Release -DAUDIOVIZ_BUILD_GUI=OFF $WERROR
     - cmake --build build -j"$(nproc)"
     - ctest --test-dir build --output-on-failure --output-junit junit.xml
 
 # --- Windows: Visual Studio (MSVC) on a PowerShell runner --------------------------------
 
 windows-msvc:
+  extends: .junit
   stage: test
   tags:
     - $WINDOWS_RUNNER_TAG
@@ -89,17 +107,15 @@ windows-msvc:
     - cmake --version
     # No -G: CMake picks the newest Visual Studio generator it finds. That generator is
     # multi-config, so the build type is chosen at build and test time.
+    # Not yet warnings-as-errors: once a run shows no MSVC warnings, add $env:WERROR here.
     - cmake -S . -B build -A x64
     - cmake --build build --config Debug --parallel
     - ctest --test-dir build -C Debug --output-on-failure --output-junit junit.xml
-  artifacts:
-    when: always
-    reports:
-      junit: build/junit.xml
 
 # --- macOS: opt-in (set AUDIOVIZ_CI_MACOS to "true") ---------------------------------------
 
 macos:
+  extends: .junit
   stage: test
   image: $MACOS_IMAGE
   tags:
@@ -108,10 +124,6 @@ macos:
     - if: $AUDIOVIZ_CI_MACOS == "true"
   script:
     - command -v cmake || brew install cmake
-    - cmake -B build -DCMAKE_BUILD_TYPE=Debug
+    - cmake -B build -DCMAKE_BUILD_TYPE=Debug $WERROR
     - cmake --build build -j"$(sysctl -n hw.ncpu)"
     - ctest --test-dir build --output-on-failure --output-junit junit.xml
-  artifacts:
-    when: always
-    reports:
-      junit: build/junit.xml

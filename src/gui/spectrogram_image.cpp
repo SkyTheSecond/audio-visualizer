@@ -44,7 +44,8 @@ Image spectrogram_to_image(const audioviz::Spectrogram& spectrogram, double dyna
         const std::size_t bin = spectrogram.bin_count - 1 - row;
 
         for (std::size_t frame = 0; frame < spectrogram.frame_count; frame++) {
-            const double db = audioviz::to_decibels(spectrogram.at(frame, bin), reference, floor_db);
+            const double db =
+                audioviz::to_decibels(spectrogram.at(frame, bin), reference, floor_db);
 
             // floor_db maps to 0.0, and 0 dB (the loudest cell) maps to 1.0.
             const Rgb color = heat_color((db - floor_db) / range);

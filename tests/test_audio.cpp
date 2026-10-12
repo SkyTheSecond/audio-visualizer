@@ -36,7 +36,7 @@ std::vector<unsigned char> make_wav(const std::vector<std::int16_t>& samples,
 
     push_tag(body, "fmt ");
     push_u32(body, 16);
-    push_u16(body, 1);                                         // PCM
+    push_u16(body, 1);  // PCM
     push_u16(body, channels);
     push_u32(body, sample_rate);
     push_u32(body, sample_rate * channels * 2);                // byte rate
@@ -111,7 +111,8 @@ TEST(Wav, FindsDataChunkAfterOtherChunks) {
 TEST(Wav, DownmixesStereoToMono) {
     // Interleaved L R: (1.0, 0.0) then (0.0, 1.0). Both average to 0.5.
     const std::vector<std::int16_t> samples = {32767, 0, 0, 32767};
-    const auto path = write_temp_wav(make_wav(samples, 2, 44100, false), "audioviz_test_stereo.wav");
+    const auto path =
+        write_temp_wav(make_wav(samples, 2, 44100, false), "audioviz_test_stereo.wav");
 
     const auto result = audioviz::load_wav(path);
     ASSERT_TRUE(result.has_value()) << result.error();

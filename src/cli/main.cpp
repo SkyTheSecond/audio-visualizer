@@ -23,10 +23,12 @@ int main(int argc, char** argv) {
     std::println("duration    : {:.2f} s", audio->duration_seconds());
 
     const std::vector<double> mono = audioviz::to_mono(*audio);
-    const audioviz::Spectrogram spectrogram = audioviz::compute_spectrogram(mono, audio->sample_rate);
+    const audioviz::Spectrogram spectrogram =
+        audioviz::compute_spectrogram(mono, audio->sample_rate);
 
     std::println("");
-    std::println("spectrogram : {} frames x {} bins", spectrogram.frame_count, spectrogram.bin_count);
+    std::println("spectrogram : {} frames x {} bins", spectrogram.frame_count,
+                 spectrogram.bin_count);
     std::println("bin width   : {:.2f} Hz", spectrogram.bin_frequency(1));
     std::println("frame step  : {:.1f} ms", spectrogram.frame_time(1) * 1000.0);
 

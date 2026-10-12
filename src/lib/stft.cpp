@@ -108,7 +108,8 @@ bool write_pgm(const Spectrogram& spectrogram, const std::string& path) {
             row[frame] = static_cast<unsigned char>(std::clamp(normalised, 0.0, 1.0) * 255.0);
         }
 
-        out.write(reinterpret_cast<const char*>(row.data()), static_cast<std::streamsize>(row.size()));
+        out.write(reinterpret_cast<const char*>(row.data()),
+                  static_cast<std::streamsize>(row.size()));
     }
 
     return out.good();

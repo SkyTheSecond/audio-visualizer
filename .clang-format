@@ -1,0 +1,10 @@
+# Matches the style of the original code: Google's layout with 4-space indents and
+# 100 columns. Run `clang-format -i` on a file, or let your editor do it on save.
+BasedOnStyle: Google
+IndentWidth: 4
+ColumnLimit: 100
+AccessModifierOffset: -4
+DerivePointerAlignment: false
+PointerAlignment: Left
+IncludeBlocks: Preserve
+MainIncludeChar: Any

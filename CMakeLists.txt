@@ -7,6 +7,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(AUDIOVIZ_BUILD_GUI "Build the OpenGL spectrogram viewer (needs a windowing system)" ON)
+option(AUDIOVIZ_WARNINGS_AS_ERRORS "Fail the build on any compiler warning in our own code (CI turns this on)" OFF)
 
 # A compiler can accept -std=c++23 while its standard library still lacks pieces we use.
 # The classic case: Clang 18 with GCC's libstdc++ (Ubuntu 24.04's default `clang`) has no
@@ -37,6 +38,16 @@ if(MSVC)
 else()
     set(AUDIOVIZ_WARNINGS -Wall -Wextra)
     set(AUDIOVIZ_STRICT_WARNINGS ${AUDIOVIZ_WARNINGS} -Wpedantic)
+endif()
+if(AUDIOVIZ_WARNINGS_AS_ERRORS)
+    # Only our targets use these lists; vendored code keeps its own warning settings.
+    if(MSVC)
+        list(APPEND AUDIOVIZ_WARNINGS /WX)
+        list(APPEND AUDIOVIZ_STRICT_WARNINGS /WX)
+    else()
+        list(APPEND AUDIOVIZ_WARNINGS -Werror)
+        list(APPEND AUDIOVIZ_STRICT_WARNINGS -Werror)
+    endif()
 endif()
 
 # Adding google test

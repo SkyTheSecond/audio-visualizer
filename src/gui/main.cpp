@@ -7,6 +7,7 @@
 // glad must come before GLFW. GLFW_INCLUDE_NONE (set in CMake) already stops GLFW from
 // pulling in another GL header, but this order is the safe habit.
 #include <glad/gl.h>
+
 #include <GLFW/glfw3.h>
 
 #include <imgui.h>
@@ -31,7 +32,7 @@ struct GlVersion {
 // Core-profile versions to try, newest first. 4.6 is the target; 4.5 still has Direct State
 // Access and 4.3 still has debug output (both have fallbacks below). 4.1 is the macOS
 // ceiling, and 3.3 is the oldest that ImGui's OpenGL3 backend is happy with.
-constexpr std::array<GlVersion, 5> kGlVersions{{{4, 6}, {4, 5}, {4, 3}, {4, 1}, {3, 3}}};
+constexpr std::array<GlVersion, 5> gl_versions{{{4, 6}, {4, 5}, {4, 3}, {4, 1}, {3, 3}}};
 
 void on_glfw_error(int code, const char* description) {
     std::fprintf(stderr, "GLFW error %d: %s\n", code, description);
@@ -44,7 +45,7 @@ GLFWwindow* create_window() {
     glfwSetErrorCallback([](int, const char* description) { last_error = description; });
 
     GLFWwindow* window = nullptr;
-    for (const GlVersion version : kGlVersions) {
+    for (const GlVersion version : gl_versions) {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, version.major);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, version.minor);
         window = glfwCreateWindow(1280, 720, "audio visualizer - spectrogram", nullptr, nullptr);
@@ -114,7 +115,8 @@ int main(int argc, char** argv) {
     }
 
     const std::vector<double> mono = audioviz::to_mono(*audio);
-    const audioviz::Spectrogram spectrogram = audioviz::compute_spectrogram(mono, audio->sample_rate);
+    const audioviz::Spectrogram spectrogram =
+        audioviz::compute_spectrogram(mono, audio->sample_rate);
 
     // Pure CPU work: magnitudes to coloured pixels. No GL involved yet.
     const gui::Image image = gui::spectrogram_to_image(spectrogram);
@@ -176,7 +178,8 @@ int main(int argc, char** argv) {
     const std::string glsl_version = std::format("#version {}{}0 core", gl_major, gl_minor);
     ImGui_ImplOpenGL3_Init(glsl_version.c_str());
 
-    const std::string gl_info = std::format("{}\n{}", gl_string(GL_VERSION), gl_string(GL_RENDERER));
+    const std::string gl_info =
+        std::format("{}\n{}", gl_string(GL_VERSION), gl_string(GL_RENDERER));
 
     {
         // Everything that owns OpenGL objects lives inside this block, so the closing
