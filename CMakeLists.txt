@@ -13,6 +13,7 @@ add_subdirectory(third_party/googletest)
 
 # Our own stuff
 add_subdirectory(src/lib)
+add_subdirectory(src/cli)
 
 enable_testing()
 add_subdirectory(tests)

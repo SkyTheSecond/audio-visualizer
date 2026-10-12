@@ -4,6 +4,7 @@ add_library(shazam STATIC
     fft.cpp
     window.cpp
     audio.cpp
+    stft.cpp
 )
 
 target_include_directories(shazam PUBLIC
