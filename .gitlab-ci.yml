@@ -1,0 +1,117 @@
+# Build and test on Linux, Windows and (opt-in) macOS.
+# Runner setup, variables and how to read the results: docs/gitlab-ci.md
+
+workflow:
+  rules:
+    # One pipeline per push: a merge request pipeline when an MR is open, else a branch one.
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+
+variables:
+  # Runner tags. The defaults are GitLab.com's hosted runners; for your own runners,
+  # override these under Settings > CI/CD > Variables (see docs/gitlab-ci.md).
+  WINDOWS_RUNNER_TAG: saas-windows-medium-amd64
+  MACOS_RUNNER_TAG: saas-macos-medium-m1
+  MACOS_IMAGE: macos-15-xcode-16
+  # macOS runners on GitLab.com need a Premium or Ultimate plan, so that job is opt-in.
+  SHAZAM_CI_MACOS: "false"
+
+stages:
+  - test
+
+# --- Linux: ubuntu:24.04 in Docker, on any runner that takes untagged jobs ---------------
+
+.linux:
+  stage: test
+  image: ubuntu:24.04
+  variables:
+    DEBIAN_FRONTEND: noninteractive
+  before_script:
+    - apt-get update -qq
+    # Exactly the README's Debian/Ubuntu packages (Ubuntu 24.04's default g++ is 13: too old).
+    - apt-get install -y -qq --no-install-recommends build-essential cmake pkg-config xorg-dev
+      libwayland-dev libxkbcommon-dev wayland-protocols g++-14 > /dev/null
+  artifacts:
+    when: always
+    reports:
+      junit: build/junit.xml
+
+linux-gcc:
+  extends: .linux
+  script:
+    # Extras for running the programs: python3 makes a test WAV, Xvfb + Mesa give a display.
+    - apt-get install -y -qq --no-install-recommends python3 xvfb xauth libgl1-mesa-dri > /dev/null
+    - export CC=gcc-14 CXX=g++-14
+    - cmake -B build -DCMAKE_BUILD_TYPE=Debug
+    - cmake --build build -j"$(nproc)"
+    - ctest --test-dir build --output-on-failure --output-junit junit.xml
+    - python3 ci/make_test_wav.py chirp.wav
+    - ./build/src/cli/shazam_cli chirp.wav chirp.pgm
+    - bash ci/gui_smoke.sh ./build/src/gui/shazam_gui chirp.wav
+
+linux-clang:
+  extends: .linux
+  script:
+    # Clang 19, not Ubuntu's default 18: Clang 18 with GCC's library has no std::expected.
+    - apt-get install -y -qq --no-install-recommends clang-19 > /dev/null
+    - export CC=clang-19 CXX=clang++-19
+    - cmake -B build -DCMAKE_BUILD_TYPE=Debug
+    - cmake --build build -j"$(nproc)"
+    - ctest --test-dir build --output-on-failure --output-junit junit.xml
+
+linux-headless:
+  extends: .linux
+  # Library, CLI and tests only: proves none of it needs the windowing packages.
+  before_script:
+    - apt-get update -qq
+    - apt-get install -y -qq --no-install-recommends build-essential cmake g++-14 > /dev/null
+  script:
+    - export CC=gcc-14 CXX=g++-14
+    - cmake -B build -DCMAKE_BUILD_TYPE=Release -DSHAZAM_BUILD_GUI=OFF
+    - cmake --build build -j"$(nproc)"
+    - ctest --test-dir build --output-on-failure --output-junit junit.xml
+
+# --- Windows: Visual Studio (MSVC) on a PowerShell runner --------------------------------
+
+windows-msvc:
+  stage: test
+  tags:
+    - $WINDOWS_RUNNER_TAG
+  script:
+    # Find the newest Visual Studio with the C++ tools, and put the CMake it ships on PATH.
+    - $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+    - $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+    - if (-not $vs) { throw "No Visual Studio with the C++ workload on this runner" }
+    - 'Write-Host "Visual Studio $(& $vswhere -latest -products * -property catalog_productDisplayVersion) at $vs"'
+    - $env:Path = "$vs\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin;$env:Path"
+    - cmake --version
+    # No -G: CMake picks the newest Visual Studio generator it finds. That generator is
+    # multi-config, so the build type is chosen at build and test time.
+    - cmake -S . -B build -A x64
+    - cmake --build build --config Debug --parallel
+    - ctest --test-dir build -C Debug --output-on-failure --output-junit junit.xml
+  artifacts:
+    when: always
+    reports:
+      junit: build/junit.xml
+
+# --- macOS: opt-in (set SHAZAM_CI_MACOS to "true") ---------------------------------------
+
+macos:
+  stage: test
+  image: $MACOS_IMAGE
+  tags:
+    - $MACOS_RUNNER_TAG
+  rules:
+    - if: $SHAZAM_CI_MACOS == "true"
+  script:
+    - command -v cmake || brew install cmake
+    - cmake -B build -DCMAKE_BUILD_TYPE=Debug
+    - cmake --build build -j"$(sysctl -n hw.ncpu)"
+    - ctest --test-dir build --output-on-failure --output-junit junit.xml
+  artifacts:
+    when: always
+    reports:
+      junit: build/junit.xml
